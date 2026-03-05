@@ -280,6 +280,86 @@
 </div>
 
 <script>
+    // ── Audio engine (Web Audio API — no external files) ─────────────────────
+    const AC = new (window.AudioContext || window.webkitAudioContext)();
+
+    function resumeAC() { if (AC.state === 'suspended') AC.resume(); }
+
+    /** Generic helper: create and connect osc + gain, auto-stop at t=end */
+    function tone({ type='sine', freq=440, freqEnd=null, vol=0.4, start=0, end=0.3, wave=null }) {
+        const now  = AC.currentTime + start;
+        const osc  = AC.createOscillator();
+        const gain = AC.createGain();
+        osc.connect(gain); gain.connect(AC.destination);
+        osc.type = type;
+        if (wave) osc.setPeriodicWave(wave);
+        osc.frequency.setValueAtTime(freq, now);
+        if (freqEnd !== null) osc.frequency.exponentialRampToValueAtTime(freqEnd, now + (end - start));
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + (end - start));
+        osc.start(now);
+        osc.stop(now + (end - start) + 0.01);
+    }
+
+    /** White-noise burst for dice rattle */
+    function noise({ vol=0.15, start=0, end=0.12 }) {
+        const buf    = AC.createBuffer(1, AC.sampleRate * end, AC.sampleRate);
+        const data   = buf.getChannelData(0);
+        for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;
+        const src    = AC.createBufferSource();
+        const gain   = AC.createGain();
+        const filter = AC.createBiquadFilter();
+        src.buffer = buf;
+        filter.type = 'bandpass'; filter.frequency.value = 800; filter.Q.value = 0.8;
+        src.connect(filter); filter.connect(gain); gain.connect(AC.destination);
+        const now = AC.currentTime + start;
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + end);
+        src.start(now); src.stop(now + end + 0.01);
+    }
+
+    const SFX = {
+        roll() {
+            resumeAC();
+            // Rapid rattling clicks
+            for (let i = 0; i < 8; i++) {
+                noise({ vol: 0.12 + Math.random()*0.08, start: i * 0.07, end: 0.05 });
+            }
+        },
+        move() {
+            resumeAC();
+            tone({ type:'sine', freq:520, freqEnd:600, vol:0.25, start:0, end:0.08 });
+        },
+        snake() {
+            resumeAC();
+            // Descending "doh-oh-oh" glide
+            tone({ type:'sawtooth', freq:480, freqEnd:140, vol:0.28, start:0,   end:0.55 });
+            tone({ type:'sine',     freq:240, freqEnd:100, vol:0.15, start:0.1, end:0.55 });
+        },
+        ladder() {
+            resumeAC();
+            // Ascending cheerful arpeggio
+            [261.6, 329.6, 392, 523.3].forEach((f, i) => {
+                tone({ type:'triangle', freq:f, vol:0.3, start: i*0.1, end: i*0.1+0.18 });
+            });
+        },
+        win() {
+            resumeAC();
+            // Short fanfare: two quick chords then a high note
+            [[523,659,784],[587,740,880]].forEach(([a,b,c], i) => {
+                const t = i * 0.22;
+                tone({ type:'triangle', freq:a, vol:0.25, start:t, end:t+0.18 });
+                tone({ type:'triangle', freq:b, vol:0.20, start:t, end:t+0.18 });
+                tone({ type:'triangle', freq:c, vol:0.18, start:t, end:t+0.18 });
+            });
+            tone({ type:'sine', freq:1047, freqEnd:1100, vol:0.3, start:0.5, end:0.9 });
+        },
+        noMove() {
+            resumeAC();
+            tone({ type:'sine', freq:220, freqEnd:180, vol:0.2, start:0, end:0.2 });
+        },
+    };
+
     // ── Board geometry ────────────────────────────────────────────────────────
     const CELL = 60;
     const canvas = document.getElementById('gameCanvas');
@@ -524,6 +604,7 @@
 
         const diceEl = document.getElementById('diceDisplay');
         diceEl.classList.add('rolling');
+        SFX.roll();
 
         // Shuffle animation
         for (let i = 0; i < 12; i++) {
@@ -540,28 +621,33 @@
 
         if (p.pos + roll > 100) {
             msg += ' Needs an exact roll — no move.';
+            SFX.noMove();
         } else {
             p.pos += roll;
             msg += ` Moved to ${p.pos}.`;
+            SFX.move();
             render();
             await sleep(500);
 
             if (SNAKES[p.pos]) {
                 const dest = SNAKES[p.pos];
                 msg += ` 🐍 Snake! Slides down to ${dest}.`;
+                SFX.snake();
                 p.pos = dest;
                 render();
-                await sleep(300);
+                await sleep(600);
             } else if (LADDERS[p.pos]) {
                 const dest = LADDERS[p.pos];
                 msg += ` 🪜 Ladder! Climbs up to ${dest}.`;
+                SFX.ladder();
                 p.pos = dest;
                 render();
-                await sleep(300);
+                await sleep(500);
             }
 
             if (p.pos === 100) {
                 render();
+                SFX.win();
                 gameOver = true;
                 document.getElementById('winnerText').textContent = `${p.name} wins! Congratulations!`;
                 document.getElementById('winnerOverlay').classList.add('show');
