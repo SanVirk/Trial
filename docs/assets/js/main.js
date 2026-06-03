@@ -291,6 +291,13 @@
     var fslot = document.getElementById("site-footer-slot");
     if (fslot) fslot.innerHTML = buildFooter();
 
+    // Sticky mobile action bar (shown only on small screens via CSS)
+    document.body.insertAdjacentHTML("beforeend",
+      '<div class="mobile-bar" aria-label="Quick actions">' +
+        '<a class="mb-call" href="' + PHONE_HREF + '">' + I.phone + ' Call us</a>' +
+        '<a class="mb-book" href="' + BOOK_HREF + '">' + I.calendar + ' Book now</a>' +
+      '</div>');
+
     // expose icons for inline use on pages (data-icon="name")
     document.querySelectorAll("[data-icon]").forEach(function (el) {
       var name = el.getAttribute("data-icon");
