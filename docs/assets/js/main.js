@@ -5,6 +5,13 @@
 (function () {
   "use strict";
 
+  // Apply the saved style as early as possible to avoid a flash.
+  try {
+    document.documentElement.setAttribute("data-theme", localStorage.getItem("whd-theme") || "modern");
+  } catch (e) {
+    document.documentElement.setAttribute("data-theme", "modern");
+  }
+
   var PHONE_DISPLAY = "0121 475 3545";
   var PHONE_HREF = "tel:01214753545";
   var EMAIL = "info@westheathdental.co.uk";
@@ -275,6 +282,28 @@
     if (y) y.textContent = String(new Date().getFullYear());
   }
 
+  function wireTheme() {
+    var sw = document.createElement("div");
+    sw.className = "theme-switch";
+    sw.setAttribute("role", "group");
+    sw.setAttribute("aria-label", "Choose a website style");
+    sw.innerHTML =
+      '<span class="ts-label">Style</span>' +
+      '<button type="button" data-theme-set="classic">Classic</button>' +
+      '<button type="button" data-theme-set="modern">Modern</button>';
+    document.body.appendChild(sw);
+    var btns = sw.querySelectorAll("button");
+    function apply(t) {
+      document.documentElement.setAttribute("data-theme", t);
+      try { localStorage.setItem("whd-theme", t); } catch (e) {}
+      btns.forEach(function (b) { b.classList.toggle("on", b.getAttribute("data-theme-set") === t); });
+    }
+    btns.forEach(function (b) {
+      b.addEventListener("click", function () { apply(b.getAttribute("data-theme-set")); });
+    });
+    apply(document.documentElement.getAttribute("data-theme") || "modern");
+  }
+
   function wireHours() {
     var today = new Date().getDay();
     document.querySelectorAll(".hours-row[data-day]").forEach(function (row) {
@@ -310,6 +339,7 @@
     wireAccordions();
     wireContactForm();
     wireHours();
+    wireTheme();
     setYear();
   }
 
