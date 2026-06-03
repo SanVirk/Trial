@@ -94,7 +94,9 @@
         '<a class="brand" href="index.html" aria-label="West Heath Dental Practice — home">' +
           '<img src="assets/img/logo.png" alt="West Heath Dental Practice">' +
         '</a>' +
-        '<ul class="nav-menu">' + menu + '</ul>' +
+        '<ul class="nav-menu">' + menu +
+          '<li class="menu-cta"><a class="btn btn-primary btn-block" href="' + BOOK_HREF + '">' + I.calendar + ' Book an appointment</a></li>' +
+        '</ul>' +
         '<div class="nav-cta">' +
           '<a class="nav-phone" href="' + PHONE_HREF + '">' + I.phone + '<span>' + PHONE_DISPLAY + '</span></a>' +
           '<a class="btn btn-primary" href="' + BOOK_HREF + '">' + I.calendar + ' Book online</a>' +
