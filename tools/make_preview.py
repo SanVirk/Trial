@@ -27,16 +27,24 @@ def body_of(html):
 
 def main():
     css = (SITE / "assets/css/styles.css").read_text()
-    css = css.replace('url("../img/texture-linen.jpg")', "none")
     js = (SITE / "assets/js/main.js").read_text().strip()
     assert js.splitlines()[1].startswith("(function ()") and js.endswith("})();")
     js = js.replace("(function () {", "window.__initSite = function () {", 1)[:-len("})();")] + "};"
     favicon = base64.b64encode((SITE / "assets/img/favicon.svg").read_bytes()).decode()
 
+    # embed the real photos once, as data URIs; pages reference them by name
+    imgs = {}
+    for f in sorted((SITE / "assets/img").glob("*.jpg")):
+        imgs[f.name] = "data:image/jpeg;base64," + base64.b64encode(f.read_bytes()).decode()
+    css = css.replace('url("../img/texture-linen.jpg")',
+                      f'url("{imgs["texture-linen.jpg"]}")' if "texture-linen.jpg" in imgs else "none")
+
     pages = {}
     for p in PAGES:
         cls, inner = body_of((SITE / f"{p}.html").read_text())
         title = re.search(r"<title>(.*?)</title>", (SITE / f"{p}.html").read_text()).group(1)
+        inner = re.sub(r'src="assets/img/([^"]+)"', r'data-img="\1"', inner)
+        inner = inner.replace(' loading="lazy"', '')  # images are embedded, so load them all at once
         pages[p] = {"cls": cls, "title": title, "html": inner}
 
     templates = "\n".join(
@@ -44,6 +52,7 @@ def main():
         for p, d in pages.items())
 
     router = """
+var IMGS = %s;
 window.Cookiebot = { renew: function () { alert('On the live site this opens the Cookiebot cookie settings.'); } };
 (function () {
   var pages = %s;
@@ -53,6 +62,10 @@ window.Cookiebot = { renew: function () { alert('On the live site this opens the
     document.body.className = tpl.dataset.cls;
     document.title = tpl.dataset.title + ' (preview)';
     document.body.innerHTML = tpl.innerHTML + document.getElementById('preview-chip-tpl').innerHTML;
+    document.querySelectorAll('img[data-img]').forEach(function (img) {
+      var src = IMGS[img.dataset.img];
+      if (src) img.src = src; else img.hidden = true;
+    });
     window.__initSite();
     var target = anchor && document.getElementById(anchor);
     if (target) { setTimeout(function () { target.scrollIntoView(); }, 30); } else { window.scrollTo(0, 0); }
@@ -93,9 +106,9 @@ window.Cookiebot = { renew: function () { alert('On the live site this opens the
   window.addEventListener('hashchange', fromHash);
   fromHash();
 })();
-""" % json.dumps(PAGES)
+""" % (json.dumps(imgs), json.dumps(PAGES))
 
-    chip = """<template id="preview-chip-tpl"><div class="preview-chip" role="note">Preview: photos and the map appear once the site is live</div></template>"""
+    chip = """<template id="preview-chip-tpl"><div class="preview-chip" role="note">Preview: the map and reviews tab appear once the site is live</div></template>"""
     chip_css = """
 .preview-chip { position: fixed; z-index: 95; left: 50%; transform: translateX(-50%); bottom: calc(84px + env(safe-area-inset-bottom));
   background: rgba(31,42,46,.86); color: #fff; font: 600 12px/1.3 var(--font-body); padding: .45rem .9rem; border-radius: 999px;

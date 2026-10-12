@@ -412,12 +412,19 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
   position: absolute; inset: 0; z-index: -2; border-radius: 0; aspect-ratio: auto;
 }
 .hero .media::after { left: auto; right: 1rem; bottom: 1rem; }
+.hero .media img { object-position: 66% 50%; } /* keep the people in view on narrow screens */
 .hero::after {
   content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
   background:
     linear-gradient(90deg, rgba(22, 40, 42, .82) 0%, rgba(22, 40, 42, .55) 40%, rgba(22, 40, 42, .05) 75%),
     linear-gradient(0deg, rgba(22, 40, 42, .55) 0%, transparent 45%),
     linear-gradient(180deg, rgba(22, 40, 42, .45) 0%, transparent 22%);
+}
+@media (max-width: 767px) {
+  .hero::after {
+    background:
+      linear-gradient(0deg, rgba(22, 40, 42, .9) 0%, rgba(22, 40, 42, .72) 50%, rgba(22, 40, 42, .45) 100%);
+  }
 }
 .hero__inner { max-width: 44rem; }
 .hero h1 { color: var(--white); margin-bottom: .35em; }

@@ -1083,6 +1083,10 @@ or as `[VERIFY]` in an HTML comment is listed here. Search the HTML files for `v
 - [ ] **Whitening.** Confirm the system used (home trays are assumed).
 - [ ] Have a clinician read through all treatment copy before launch.
 
+## Images
+- [ ] **contact-exterior.jpg is an AI stand-in.** Replace it with a real photo of 37 Carlton Road, so patients recognise the building. Use 1800 × 1200, landscape, with the same filename.
+- [ ] All other photos are AI-generated scenes. They must not be presented as real patients, real staff or treatment results.
+
 ## Reviews (index.html)
 - [ ] Paste **real, verified** reviews from Working Feedback into the three review cards (with permission). Delete any card you don't fill.
 - [ ] Confirm the "5/5 verified reviews" claim in the trust strip matches the current Working Feedback score.
