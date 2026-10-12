@@ -747,6 +747,7 @@ body { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 .radio-row label { display: inline-flex; align-items: center; gap: .5rem; padding: .6rem 1rem; border: 1px solid rgba(31, 42, 46, .2); border-radius: var(--radius-pill); font-weight: 500; cursor: pointer; margin: 0; }
 .radio-row input { width: 18px; height: 18px; min-height: 0; accent-color: var(--teal); }
 .radio-row label:has(input:checked) { border-color: var(--teal); background: var(--sage-soft); }
+.field label.check { font-weight: 500; margin: 0; }
 .check { display: grid; grid-template-columns: 22px 1fr; gap: .75rem; align-items: start; font-size: .9rem; color: var(--ink-soft); }
 .check input { width: 20px; height: 20px; min-height: 0; margin-top: .2em; accent-color: var(--teal); }
 .form-status { margin-top: 1rem; font-size: .95rem; }
